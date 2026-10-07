@@ -1,0 +1,6 @@
+{
+  "name": "Chor - চোর",
+  "description": "একটি মজার কার্টুন আর্কেড গেম যেখানে ২ মিনিট ৩০ সেকেন্ডের মধ্যে যত বেশি সম্ভব ভার্চুয়াল কয়েন ও জিনিস সংগ্রহ করতে হয়।",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

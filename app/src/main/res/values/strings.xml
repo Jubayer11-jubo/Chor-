@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">Chor - চোর</string>
+    <string name="developer_name">JR Jubayer Hasan</string>
+    <string name="game_tagline">২ মিনিট ৩০ সেকেন্ডে কত কয়েন করতে পারো?</string>
+    <string name="game_objective">সময় শেষ হওয়ার আগে যত বেশি সম্ভব জিনিস সংগ্রহ করো এবং বেশি Virtual Coins অর্জন করো।</string>
+    <string name="action_start_game">খেলা শুরু করুন</string>
+    <string name="action_steal">চুরি করো</string>
+    <string name="action_cow_escape">গরু নিয়ে পালাও</string>
+    <string name="action_play_again">PLAY AGAIN</string>
+    <string name="action_leaderboard">LEADERBOARD</string>
+    <string name="action_invite_friend">বন্ধুকে খেলতে ডাকুন</string>
+    <string name="action_play_with_friends">বন্ধুদের সাথে খেলুন</string>
+    <string name="action_chanda_mode">উৎসব চাঁদা তোলা বোনাস রাউন্ড</string>
+    <string name="virtual_coins_disclaimer">Virtual Coins-এর কোনো বাস্তব আর্থিক মূল্য নেই।</string>
+</resources>

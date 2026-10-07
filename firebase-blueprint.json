@@ -1,0 +1,335 @@
+{
+  "entities": {
+    "AdminRecord": {
+      "title": "AdminRecord",
+      "description": "Represents an administrator UID in the system.",
+      "type": "object",
+      "properties": {
+        "adminId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["adminId", "createdAt"]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Stores a player's profile, coins, referral code, team info, and achievements.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "username": { "type": "string" },
+        "avatarId": { "type": "string" },
+        "totalCoins": { "type": "integer" },
+        "totalRounds": { "type": "integer" },
+        "bestScore": { "type": "integer" },
+        "highestCombo": { "type": "integer" },
+        "mangoCount": { "type": "integer" },
+        "coconutCount": { "type": "integer" },
+        "cowCount": { "type": "integer" },
+        "unlockedAchievements": { "type": "array" },
+        "suspended": { "type": "boolean" },
+        "tutorialCompleted": { "type": "boolean" },
+        "referralCode": { "type": "string" },
+        "referredByCode": { "type": "string" },
+        "referralCount": { "type": "integer" },
+        "teamId": { "type": "string" },
+        "teamName": { "type": "string" },
+        "chandaBestScore": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId", "username", "avatarId", "totalCoins", "totalRounds",
+        "bestScore", "highestCombo", "mangoCount", "coconutCount", "cowCount",
+        "unlockedAchievements", "suspended", "tutorialCompleted", "createdAt", "updatedAt"
+      ]
+    },
+    "ScoreEntry": {
+      "title": "ScoreEntry",
+      "description": "Represents a completed game round score for leaderboards.",
+      "type": "object",
+      "properties": {
+        "scoreId": { "type": "string" },
+        "userId": { "type": "string" },
+        "username": { "type": "string" },
+        "avatarId": { "type": "string" },
+        "coinsEarned": { "type": "integer" },
+        "itemsCollected": { "type": "integer" },
+        "bestCombo": { "type": "integer" },
+        "durationSeconds": { "type": "integer" },
+        "mostCollectedItem": { "type": "string" },
+        "periodDay": { "type": "string" },
+        "periodWeek": { "type": "string" },
+        "flaggedSuspicious": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["valid", "flagged"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "scoreId", "userId", "username", "avatarId", "coinsEarned",
+        "itemsCollected", "bestCombo", "durationSeconds", "mostCollectedItem",
+        "periodDay", "periodWeek", "flaggedSuspicious", "status", "createdAt"
+      ]
+    },
+    "GameSession": {
+      "title": "GameSession",
+      "description": "Stores an individual CHOR or CHANDA gameplay session record.",
+      "type": "object",
+      "properties": {
+        "sessionId": { "type": "string" },
+        "userId": { "type": "string" },
+        "username": { "type": "string" },
+        "gameMode": { "type": "string", "enum": ["CHOR", "CHANDA"] },
+        "coinsEarned": { "type": "integer" },
+        "itemsCollected": { "type": "integer" },
+        "bestCombo": { "type": "integer" },
+        "durationSeconds": { "type": "integer" },
+        "roomCode": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "sessionId", "userId", "username", "gameMode", "coinsEarned",
+        "itemsCollected", "bestCombo", "durationSeconds", "roomCode", "createdAt"
+      ]
+    },
+    "ReferralRecord": {
+      "title": "ReferralRecord",
+      "description": "Tracks friend invitations and referral rewards.",
+      "type": "object",
+      "properties": {
+        "referralId": { "type": "string" },
+        "referrerUserId": { "type": "string" },
+        "referrerCode": { "type": "string" },
+        "referredUserId": { "type": "string" },
+        "referredUsername": { "type": "string" },
+        "rewardCoins": { "type": "integer" },
+        "status": { "type": "string", "enum": ["completed", "flagged"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "referralId", "referrerUserId", "referrerCode", "referredUserId",
+        "referredUsername", "rewardCoins", "status", "createdAt"
+      ]
+    },
+    "FriendConnection": {
+      "title": "FriendConnection",
+      "description": "Stores a player's friend entry.",
+      "type": "object",
+      "properties": {
+        "friendshipId": { "type": "string" },
+        "userId": { "type": "string" },
+        "friendUserId": { "type": "string" },
+        "friendUsername": { "type": "string" },
+        "friendAvatarId": { "type": "string" },
+        "friendBestScore": { "type": "integer" },
+        "friendTeamName": { "type": "string" },
+        "onlineStatus": { "type": "string", "enum": ["ONLINE", "OFFLINE"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "friendshipId", "userId", "friendUserId", "friendUsername",
+        "friendAvatarId", "friendBestScore", "friendTeamName", "onlineStatus", "createdAt"
+      ]
+    },
+    "TeamRecord": {
+      "title": "TeamRecord",
+      "description": "Represents a multiplayer team created by a Team Manager.",
+      "type": "object",
+      "properties": {
+        "teamId": { "type": "string" },
+        "teamCode": { "type": "string" },
+        "teamName": { "type": "string" },
+        "teamAvatar": { "type": "string" },
+        "managerId": { "type": "string" },
+        "managerName": { "type": "string" },
+        "memberIds": { "type": "array" },
+        "memberNames": { "type": "array" },
+        "totalScore": { "type": "integer" },
+        "suspended": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["active", "suspended"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "teamId", "teamCode", "teamName", "teamAvatar", "managerId", "managerName",
+        "memberIds", "memberNames", "totalScore", "suspended", "status", "createdAt", "updatedAt"
+      ]
+    },
+    "CompetitionRoom": {
+      "title": "CompetitionRoom",
+      "description": "Represents a private friend battle or team competition room.",
+      "type": "object",
+      "properties": {
+        "competitionId": { "type": "string" },
+        "roomCode": { "type": "string" },
+        "title": { "type": "string" },
+        "managerId": { "type": "string" },
+        "managerName": { "type": "string" },
+        "gameMode": { "type": "string", "enum": ["CHOR", "CHANDA", "TEAM_CHOR"] },
+        "status": { "type": "string", "enum": ["waiting", "active", "completed", "closed"] },
+        "durationSeconds": { "type": "integer" },
+        "participantIds": { "type": "array" },
+        "leaderboardSummary": { "type": "array" },
+        "winnerName": { "type": "string" },
+        "winnerScore": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "competitionId", "roomCode", "title", "managerId", "managerName",
+        "gameMode", "status", "durationSeconds", "participantIds",
+        "leaderboardSummary", "winnerName", "winnerScore", "createdAt", "updatedAt"
+      ]
+    },
+    "ChallengeMatch": {
+      "title": "ChallengeMatch",
+      "description": "Represents a 1v1 shareable score challenge between two players.",
+      "type": "object",
+      "properties": {
+        "challengeId": { "type": "string" },
+        "challengeCode": { "type": "string" },
+        "creatorId": { "type": "string" },
+        "creatorName": { "type": "string" },
+        "creatorScore": { "type": "integer" },
+        "gameMode": { "type": "string", "enum": ["CHOR", "CHANDA"] },
+        "accepterId": { "type": "string" },
+        "accepterName": { "type": "string" },
+        "accepterScore": { "type": "integer" },
+        "winnerName": { "type": "string" },
+        "status": { "type": "string", "enum": ["open", "completed"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "challengeId", "challengeCode", "creatorId", "creatorName", "creatorScore",
+        "gameMode", "accepterId", "accepterName", "accepterScore", "winnerName",
+        "status", "createdAt", "updatedAt"
+      ]
+    },
+    "AppNotification": {
+      "title": "AppNotification",
+      "description": "In-app notification for challenges, invites, teams, and achievements.",
+      "type": "object",
+      "properties": {
+        "notificationId": { "type": "string" },
+        "recipientUserId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "type": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "actionCode": { "type": "string" },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "notificationId", "recipientUserId", "senderName", "type",
+        "title", "message", "actionCode", "read", "createdAt"
+      ]
+    },
+    "GameSettings": {
+      "title": "GameSettings",
+      "description": "Global game, Chanda mini-game, referral, team, and advertisement settings.",
+      "type": "object",
+      "properties": {
+        "configId": { "type": "string" },
+        "roundDurationSeconds": { "type": "integer" },
+        "maxComboMultiplier": { "type": "integer" },
+        "npcDetectionRadius": { "type": "integer" },
+        "specialItemFrequency": { "type": "integer" },
+        "itemSpawnRate": { "type": "integer" },
+        "difficulty": { "type": "string", "enum": ["EASY", "NORMAL", "HARD"] },
+        "playerSpeedMultiplier": { "type": "integer" },
+        "adsEnabled": { "type": "boolean" },
+        "topBannerEnabled": { "type": "boolean" },
+        "bottomBannerEnabled": { "type": "boolean" },
+        "resultAdEnabled": { "type": "boolean" },
+        "rewardedAdEnabled": { "type": "boolean" },
+        "rewardedCoinBonus": { "type": "integer" },
+        "adBannerCode": { "type": "string" },
+        "adBannerSize": { "type": "string" },
+        "productionDomain": { "type": "string" },
+        "downloadAppUrl": { "type": "string" },
+        "referralRewardCoins": { "type": "integer" },
+        "maxTeamSize": { "type": "integer" },
+        "chandaDurationSeconds": { "type": "integer" },
+        "chandaBaseReward": { "type": "integer" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "configId", "roundDurationSeconds", "maxComboMultiplier", "npcDetectionRadius",
+        "specialItemFrequency", "itemSpawnRate", "difficulty", "playerSpeedMultiplier",
+        "adsEnabled", "topBannerEnabled", "bottomBannerEnabled", "resultAdEnabled",
+        "rewardedAdEnabled", "rewardedCoinBonus", "adBannerCode", "adBannerSize", "updatedAt"
+      ]
+    },
+    "CollectibleItemConfig": {
+      "title": "CollectibleItemConfig",
+      "description": "Configurable collectible village object in the game world.",
+      "type": "object",
+      "properties": {
+        "itemId": { "type": "string" },
+        "nameBn": { "type": "string" },
+        "nameEn": { "type": "string" },
+        "emoji": { "type": "string" },
+        "coinValue": { "type": "integer" },
+        "spawnProbability": { "type": "integer" },
+        "respawnTimeSeconds": { "type": "integer" },
+        "specialEffect": { "type": "string" },
+        "active": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "itemId", "nameBn", "nameEn", "emoji", "coinValue",
+        "spawnProbability", "respawnTimeSeconds", "specialEffect", "active", "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/admins/{adminId}": {
+      "schema": { "$ref": "#/entities/AdminRecord" },
+      "description": "Admin UIDs authorized to manage the game."
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Per-user profile, referral code, team membership, and lifetime statistics."
+    },
+    "/scores/{scoreId}": {
+      "schema": { "$ref": "#/entities/ScoreEntry" },
+      "description": "Completed round score entries for leaderboards."
+    },
+    "/game_sessions/{sessionId}": {
+      "schema": { "$ref": "#/entities/GameSession" },
+      "description": "Gameplay session records for CHOR and CHANDA modes."
+    },
+    "/referrals/{referralId}": {
+      "schema": { "$ref": "#/entities/ReferralRecord" },
+      "description": "Referral tracking records."
+    },
+    "/friends/{friendshipId}": {
+      "schema": { "$ref": "#/entities/FriendConnection" },
+      "description": "Player friend connections."
+    },
+    "/teams/{teamId}": {
+      "schema": { "$ref": "#/entities/TeamRecord" },
+      "description": "Player teams and team competition standings."
+    },
+    "/competitions/{competitionId}": {
+      "schema": { "$ref": "#/entities/CompetitionRoom" },
+      "description": "Private friend battle rooms and live multiplayer competitions."
+    },
+    "/challenges/{challengeId}": {
+      "schema": { "$ref": "#/entities/ChallengeMatch" },
+      "description": "1v1 shareable challenge links and results."
+    },
+    "/notifications/{notificationId}": {
+      "schema": { "$ref": "#/entities/AppNotification" },
+      "description": "In-app notifications for invites, challenges, teams, and achievements."
+    },
+    "/game_settings/{configId}": {
+      "schema": { "$ref": "#/entities/GameSettings" },
+      "description": "Global game, Chanda mini-game, referral, and ad configuration."
+    },
+    "/items/{itemId}": {
+      "schema": { "$ref": "#/entities/CollectibleItemConfig" },
+      "description": "Configurable collectible village items."
+    }
+  }
+}

@@ -1,0 +1,697 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Pillar 1: Global Safety Net (Default-Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Global Primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        (
+          'email' in request.auth.token &&
+          'email_verified' in request.auth.token &&
+          request.auth.token.email == 'MDJUBAYERHOSEN302@gmail.com' &&
+          request.auth.token.email_verified == true
+        )
+      );
+    }
+
+    // Validation Helpers
+    function isValidAdminRecord(data) {
+      return data.keys().hasAll(['adminId', 'createdAt']) &&
+             data.keys().hasOnly(['adminId', 'createdAt']) &&
+             data.adminId is string && data.adminId.size() >= 1 && data.adminId.size() <= 128 &&
+             data.createdAt is timestamp && data.createdAt <= request.time;
+    }
+
+    function isValidUserProfile(data) {
+      return data.keys().hasAll([
+               'userId', 'username', 'avatarId', 'totalCoins', 'totalRounds',
+               'bestScore', 'highestCombo', 'mangoCount', 'coconutCount', 'cowCount',
+               'unlockedAchievements', 'suspended', 'tutorialCompleted', 'createdAt', 'updatedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'userId', 'username', 'avatarId', 'totalCoins', 'totalRounds',
+               'bestScore', 'highestCombo', 'mangoCount', 'coconutCount', 'cowCount',
+               'unlockedAchievements', 'suspended', 'tutorialCompleted',
+               'referralCode', 'referredByCode', 'referralCount', 'teamId', 'teamName',
+               'chandaBestScore', 'createdAt', 'updatedAt'
+             ]) &&
+             data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.username is string && data.username.size() >= 1 && data.username.size() <= 40 &&
+             data.avatarId is string && data.avatarId.size() >= 1 && data.avatarId.size() <= 32 &&
+             data.totalCoins is int && data.totalCoins >= 0 && data.totalCoins <= 100000000 &&
+             data.totalRounds is int && data.totalRounds >= 0 && data.totalRounds <= 1000000 &&
+             data.bestScore is int && data.bestScore >= 0 && data.bestScore <= 50000 &&
+             data.highestCombo is int && data.highestCombo >= 1 && data.highestCombo <= 100 &&
+             data.mangoCount is int && data.mangoCount >= 0 && data.mangoCount <= 1000000 &&
+             data.coconutCount is int && data.coconutCount >= 0 && data.coconutCount <= 1000000 &&
+             data.cowCount is int && data.cowCount >= 0 && data.cowCount <= 1000000 &&
+             data.unlockedAchievements is list && data.unlockedAchievements.size() <= 20 &&
+             (data.unlockedAchievements.size() == 0 || (data.unlockedAchievements[0] is string && data.unlockedAchievements[0].size() <= 64)) &&
+             data.suspended is bool &&
+             data.tutorialCompleted is bool &&
+             (!('referralCode' in data) || (data.referralCode is string && data.referralCode.size() <= 32)) &&
+             (!('referredByCode' in data) || (data.referredByCode is string && data.referredByCode.size() <= 32)) &&
+             (!('referralCount' in data) || (data.referralCount is int && data.referralCount >= 0 && data.referralCount <= 100000)) &&
+             (!('teamId' in data) || (data.teamId is string && data.teamId.size() <= 64)) &&
+             (!('teamName' in data) || (data.teamName is string && data.teamName.size() <= 40)) &&
+             (!('chandaBestScore' in data) || (data.chandaBestScore is int && data.chandaBestScore >= 0 && data.chandaBestScore <= 50000)) &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidScoreEntry(data) {
+      return data.keys().hasAll([
+               'scoreId', 'userId', 'username', 'avatarId', 'coinsEarned',
+               'itemsCollected', 'bestCombo', 'durationSeconds', 'mostCollectedItem',
+               'periodDay', 'periodWeek', 'flaggedSuspicious', 'status', 'createdAt'
+             ]) &&
+             data.keys().hasOnly([
+               'scoreId', 'userId', 'username', 'avatarId', 'coinsEarned',
+               'itemsCollected', 'bestCombo', 'durationSeconds', 'mostCollectedItem',
+               'periodDay', 'periodWeek', 'flaggedSuspicious', 'status', 'createdAt'
+             ]) &&
+             data.scoreId is string && data.scoreId.size() >= 1 && data.scoreId.size() <= 128 &&
+             data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.username is string && data.username.size() >= 1 && data.username.size() <= 40 &&
+             data.avatarId is string && data.avatarId.size() >= 1 && data.avatarId.size() <= 32 &&
+             data.coinsEarned is int && data.coinsEarned >= 0 && data.coinsEarned <= 50000 &&
+             data.itemsCollected is int && data.itemsCollected >= 0 && data.itemsCollected <= 500 &&
+             data.bestCombo is int && data.bestCombo >= 1 && data.bestCombo <= 100 &&
+             data.durationSeconds is int && data.durationSeconds >= 10 && data.durationSeconds <= 600 &&
+             data.mostCollectedItem is string && data.mostCollectedItem.size() >= 1 && data.mostCollectedItem.size() <= 64 &&
+             data.periodDay is string && data.periodDay.size() >= 8 && data.periodDay.size() <= 16 &&
+             data.periodWeek is string && data.periodWeek.size() >= 6 && data.periodWeek.size() <= 16 &&
+             data.flaggedSuspicious is bool &&
+             data.status is string && data.status in ['valid', 'flagged'] &&
+             data.createdAt is timestamp && data.createdAt <= request.time;
+    }
+
+    function isValidGameSession(data) {
+      return data.keys().hasAll([
+               'sessionId', 'userId', 'username', 'gameMode', 'coinsEarned',
+               'itemsCollected', 'bestCombo', 'durationSeconds', 'roomCode', 'createdAt'
+             ]) &&
+             data.keys().hasOnly([
+               'sessionId', 'userId', 'username', 'gameMode', 'coinsEarned',
+               'itemsCollected', 'bestCombo', 'durationSeconds', 'roomCode', 'createdAt'
+             ]) &&
+             data.sessionId is string && data.sessionId.size() >= 1 && data.sessionId.size() <= 128 &&
+             data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.username is string && data.username.size() >= 1 && data.username.size() <= 40 &&
+             data.gameMode is string && data.gameMode in ['CHOR', 'CHANDA'] &&
+             data.coinsEarned is int && data.coinsEarned >= 0 && data.coinsEarned <= 50000 &&
+             data.itemsCollected is int && data.itemsCollected >= 0 && data.itemsCollected <= 500 &&
+             data.bestCombo is int && data.bestCombo >= 1 && data.bestCombo <= 100 &&
+             data.durationSeconds is int && data.durationSeconds >= 10 && data.durationSeconds <= 600 &&
+             data.roomCode is string && data.roomCode.size() <= 32 &&
+             data.createdAt is timestamp && data.createdAt <= request.time;
+    }
+
+    function isValidReferral(data) {
+      return data.keys().hasAll([
+               'referralId', 'referrerUserId', 'referrerCode', 'referredUserId',
+               'referredUsername', 'rewardCoins', 'status', 'createdAt'
+             ]) &&
+             data.keys().hasOnly([
+               'referralId', 'referrerUserId', 'referrerCode', 'referredUserId',
+               'referredUsername', 'rewardCoins', 'status', 'createdAt'
+             ]) &&
+             data.referralId is string && data.referralId.size() >= 1 && data.referralId.size() <= 128 &&
+             data.referrerUserId is string && data.referrerUserId.size() >= 1 && data.referrerUserId.size() <= 128 &&
+             data.referrerCode is string && data.referrerCode.size() >= 3 && data.referrerCode.size() <= 32 &&
+             data.referredUserId is string && data.referredUserId.size() >= 1 && data.referredUserId.size() <= 128 &&
+             data.referrerUserId != data.referredUserId &&
+             data.referredUsername is string && data.referredUsername.size() >= 1 && data.referredUsername.size() <= 40 &&
+             data.rewardCoins is int && data.rewardCoins >= 0 && data.rewardCoins <= 1000 &&
+             data.status is string && data.status in ['completed', 'flagged'] &&
+             data.createdAt is timestamp && data.createdAt <= request.time;
+    }
+
+    function isValidFriendConnection(data) {
+      return data.keys().hasAll([
+               'friendshipId', 'userId', 'friendUserId', 'friendUsername',
+               'friendAvatarId', 'friendBestScore', 'friendTeamName', 'onlineStatus', 'createdAt'
+             ]) &&
+             data.keys().hasOnly([
+               'friendshipId', 'userId', 'friendUserId', 'friendUsername',
+               'friendAvatarId', 'friendBestScore', 'friendTeamName', 'onlineStatus', 'createdAt'
+             ]) &&
+             data.friendshipId is string && data.friendshipId.size() >= 1 && data.friendshipId.size() <= 128 &&
+             data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.friendUserId is string && data.friendUserId.size() >= 1 && data.friendUserId.size() <= 128 &&
+             data.userId != data.friendUserId &&
+             data.friendUsername is string && data.friendUsername.size() >= 1 && data.friendUsername.size() <= 40 &&
+             data.friendAvatarId is string && data.friendAvatarId.size() >= 1 && data.friendAvatarId.size() <= 32 &&
+             data.friendBestScore is int && data.friendBestScore >= 0 && data.friendBestScore <= 50000 &&
+             data.friendTeamName is string && data.friendTeamName.size() <= 40 &&
+             data.onlineStatus is string && data.onlineStatus in ['ONLINE', 'OFFLINE'] &&
+             data.createdAt is timestamp && data.createdAt <= request.time;
+    }
+
+    function isValidTeamRecord(data) {
+      return data.keys().hasAll([
+               'teamId', 'teamCode', 'teamName', 'teamAvatar', 'managerId', 'managerName',
+               'memberIds', 'memberNames', 'totalScore', 'suspended', 'status', 'createdAt', 'updatedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'teamId', 'teamCode', 'teamName', 'teamAvatar', 'managerId', 'managerName',
+               'memberIds', 'memberNames', 'totalScore', 'suspended', 'status', 'createdAt', 'updatedAt'
+             ]) &&
+             data.teamId is string && data.teamId.size() >= 1 && data.teamId.size() <= 128 &&
+             data.teamCode is string && data.teamCode.size() >= 3 && data.teamCode.size() <= 32 &&
+             data.teamName is string && data.teamName.size() >= 2 && data.teamName.size() <= 40 &&
+             data.teamAvatar is string && data.teamAvatar.size() >= 1 && data.teamAvatar.size() <= 16 &&
+             data.managerId is string && data.managerId.size() >= 1 && data.managerId.size() <= 128 &&
+             data.managerName is string && data.managerName.size() >= 1 && data.managerName.size() <= 40 &&
+             data.memberIds is list && data.memberIds.size() <= 10 &&
+             (data.memberIds.size() == 0 || (data.memberIds[0] is string && data.memberIds[0].size() <= 128)) &&
+             data.memberNames is list && data.memberNames.size() <= 10 &&
+             (data.memberNames.size() == 0 || (data.memberNames[0] is string && data.memberNames[0].size() <= 64)) &&
+             data.totalScore is int && data.totalScore >= 0 && data.totalScore <= 100000000 &&
+             data.suspended is bool &&
+             data.status is string && data.status in ['active', 'suspended'] &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidCompetitionRoom(data) {
+      return data.keys().hasAll([
+               'competitionId', 'roomCode', 'title', 'managerId', 'managerName',
+               'gameMode', 'status', 'durationSeconds', 'participantIds',
+               'leaderboardSummary', 'winnerName', 'winnerScore', 'createdAt', 'updatedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'competitionId', 'roomCode', 'title', 'managerId', 'managerName',
+               'gameMode', 'status', 'durationSeconds', 'participantIds',
+               'leaderboardSummary', 'winnerName', 'winnerScore', 'createdAt', 'updatedAt'
+             ]) &&
+             data.competitionId is string && data.competitionId.size() >= 1 && data.competitionId.size() <= 128 &&
+             data.roomCode is string && data.roomCode.size() >= 3 && data.roomCode.size() <= 32 &&
+             data.title is string && data.title.size() >= 2 && data.title.size() <= 60 &&
+             data.managerId is string && data.managerId.size() >= 1 && data.managerId.size() <= 128 &&
+             data.managerName is string && data.managerName.size() >= 1 && data.managerName.size() <= 40 &&
+             data.gameMode is string && data.gameMode in ['CHOR', 'CHANDA', 'TEAM_CHOR'] &&
+             data.status is string && data.status in ['waiting', 'active', 'completed', 'closed'] &&
+             data.durationSeconds is int && data.durationSeconds >= 30 && data.durationSeconds <= 600 &&
+             data.participantIds is list && data.participantIds.size() <= 10 &&
+             (data.participantIds.size() == 0 || (data.participantIds[0] is string && data.participantIds[0].size() <= 128)) &&
+             data.leaderboardSummary is list && data.leaderboardSummary.size() <= 10 &&
+             (data.leaderboardSummary.size() == 0 || (data.leaderboardSummary[0] is string && data.leaderboardSummary[0].size() <= 80)) &&
+             data.winnerName is string && data.winnerName.size() <= 40 &&
+             data.winnerScore is int && data.winnerScore >= 0 && data.winnerScore <= 500000 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidChallengeMatch(data) {
+      return data.keys().hasAll([
+               'challengeId', 'challengeCode', 'creatorId', 'creatorName', 'creatorScore',
+               'gameMode', 'accepterId', 'accepterName', 'accepterScore', 'winnerName',
+               'status', 'createdAt', 'updatedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'challengeId', 'challengeCode', 'creatorId', 'creatorName', 'creatorScore',
+               'gameMode', 'accepterId', 'accepterName', 'accepterScore', 'winnerName',
+               'status', 'createdAt', 'updatedAt'
+             ]) &&
+             data.challengeId is string && data.challengeId.size() >= 1 && data.challengeId.size() <= 128 &&
+             data.challengeCode is string && data.challengeCode.size() >= 3 && data.challengeCode.size() <= 32 &&
+             data.creatorId is string && data.creatorId.size() >= 1 && data.creatorId.size() <= 128 &&
+             data.creatorName is string && data.creatorName.size() >= 1 && data.creatorName.size() <= 40 &&
+             data.creatorScore is int && data.creatorScore >= 0 && data.creatorScore <= 50000 &&
+             data.gameMode is string && data.gameMode in ['CHOR', 'CHANDA'] &&
+             data.accepterId is string && data.accepterId.size() <= 128 &&
+             data.accepterName is string && data.accepterName.size() <= 40 &&
+             data.accepterScore is int && data.accepterScore >= 0 && data.accepterScore <= 50000 &&
+             data.winnerName is string && data.winnerName.size() <= 40 &&
+             data.status is string && data.status in ['open', 'completed'] &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidAppNotification(data) {
+      return data.keys().hasAll([
+               'notificationId', 'recipientUserId', 'senderName', 'type',
+               'title', 'message', 'actionCode', 'read', 'createdAt'
+             ]) &&
+             data.keys().hasOnly([
+               'notificationId', 'recipientUserId', 'senderName', 'type',
+               'title', 'message', 'actionCode', 'read', 'createdAt'
+             ]) &&
+             data.notificationId is string && data.notificationId.size() >= 1 && data.notificationId.size() <= 128 &&
+             data.recipientUserId is string && data.recipientUserId.size() >= 1 && data.recipientUserId.size() <= 128 &&
+             data.senderName is string && data.senderName.size() >= 1 && data.senderName.size() <= 40 &&
+             data.type is string && data.type.size() >= 1 && data.type.size() <= 32 &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 80 &&
+             data.message is string && data.message.size() >= 1 && data.message.size() <= 200 &&
+             data.actionCode is string && data.actionCode.size() <= 64 &&
+             data.read is bool &&
+             data.createdAt is timestamp && data.createdAt <= request.time;
+    }
+
+    function isValidGameSettings(data) {
+      return data.keys().hasAll([
+               'configId', 'roundDurationSeconds', 'maxComboMultiplier', 'npcDetectionRadius',
+               'specialItemFrequency', 'itemSpawnRate', 'difficulty', 'playerSpeedMultiplier',
+               'adsEnabled', 'topBannerEnabled', 'bottomBannerEnabled', 'resultAdEnabled',
+               'rewardedAdEnabled', 'rewardedCoinBonus', 'adBannerCode', 'adBannerSize', 'updatedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'configId', 'roundDurationSeconds', 'maxComboMultiplier', 'npcDetectionRadius',
+               'specialItemFrequency', 'itemSpawnRate', 'difficulty', 'playerSpeedMultiplier',
+               'adsEnabled', 'topBannerEnabled', 'bottomBannerEnabled', 'resultAdEnabled',
+               'rewardedAdEnabled', 'rewardedCoinBonus', 'adBannerCode', 'adBannerSize',
+               'productionDomain', 'downloadAppUrl', 'referralRewardCoins', 'maxTeamSize',
+               'chandaDurationSeconds', 'chandaBaseReward', 'updatedAt'
+             ]) &&
+             data.configId is string && data.configId.size() >= 1 && data.configId.size() <= 64 &&
+             data.roundDurationSeconds is int && data.roundDurationSeconds >= 30 && data.roundDurationSeconds <= 600 &&
+             data.maxComboMultiplier is int && data.maxComboMultiplier >= 2 && data.maxComboMultiplier <= 10 &&
+             data.npcDetectionRadius is int && data.npcDetectionRadius >= 50 && data.npcDetectionRadius <= 200 &&
+             data.specialItemFrequency is int && data.specialItemFrequency >= 10 && data.specialItemFrequency <= 100 &&
+             data.itemSpawnRate is int && data.itemSpawnRate >= 50 && data.itemSpawnRate <= 200 &&
+             data.difficulty is string && data.difficulty in ['EASY', 'NORMAL', 'HARD'] &&
+             data.playerSpeedMultiplier is int && data.playerSpeedMultiplier >= 50 && data.playerSpeedMultiplier <= 200 &&
+             data.adsEnabled is bool &&
+             data.topBannerEnabled is bool &&
+             data.bottomBannerEnabled is bool &&
+             data.resultAdEnabled is bool &&
+             data.rewardedAdEnabled is bool &&
+             data.rewardedCoinBonus is int && data.rewardedCoinBonus >= 10 && data.rewardedCoinBonus <= 500 &&
+             data.adBannerCode is string && data.adBannerCode.size() <= 500 &&
+             data.adBannerSize is string && data.adBannerSize.size() >= 3 && data.adBannerSize.size() <= 32 &&
+             (!('productionDomain' in data) || (data.productionDomain is string && data.productionDomain.size() <= 120)) &&
+             (!('downloadAppUrl' in data) || (data.downloadAppUrl is string && data.downloadAppUrl.size() <= 200)) &&
+             (!('referralRewardCoins' in data) || (data.referralRewardCoins is int && data.referralRewardCoins >= 10 && data.referralRewardCoins <= 1000)) &&
+             (!('maxTeamSize' in data) || (data.maxTeamSize is int && data.maxTeamSize >= 2 && data.maxTeamSize <= 10)) &&
+             (!('chandaDurationSeconds' in data) || (data.chandaDurationSeconds is int && data.chandaDurationSeconds >= 30 && data.chandaDurationSeconds <= 300)) &&
+             (!('chandaBaseReward' in data) || (data.chandaBaseReward is int && data.chandaBaseReward >= 10 && data.chandaBaseReward <= 500)) &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidCollectibleItemConfig(data) {
+      return data.keys().hasAll([
+               'itemId', 'nameBn', 'nameEn', 'emoji', 'coinValue',
+               'spawnProbability', 'respawnTimeSeconds', 'specialEffect', 'active', 'updatedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'itemId', 'nameBn', 'nameEn', 'emoji', 'coinValue',
+               'spawnProbability', 'respawnTimeSeconds', 'specialEffect', 'active', 'updatedAt'
+             ]) &&
+             data.itemId is string && data.itemId.size() >= 1 && data.itemId.size() <= 64 &&
+             data.nameBn is string && data.nameBn.size() >= 1 && data.nameBn.size() <= 40 &&
+             data.nameEn is string && data.nameEn.size() >= 1 && data.nameEn.size() <= 40 &&
+             data.emoji is string && data.emoji.size() >= 1 && data.emoji.size() <= 16 &&
+             data.coinValue is int && data.coinValue >= 5 && data.coinValue <= 1000 &&
+             data.spawnProbability is int && data.spawnProbability >= 1 && data.spawnProbability <= 100 &&
+             data.respawnTimeSeconds is int && data.respawnTimeSeconds >= 3 && data.respawnTimeSeconds <= 120 &&
+             data.specialEffect is string && data.specialEffect in ['NONE', 'COW_CHASE', 'SPEED_BOOST', 'TIME_BONUS', 'SNEAKY_MODE', 'JACKPOT'] &&
+             data.active is bool &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    // 1. Admins Collection
+    match /admins/{adminId} {
+      allow get: if isSignedIn() && isValidId(adminId) && (request.auth.uid == adminId || isAdmin());
+      allow list: if false;
+      allow create: if isSignedIn() && isValidId(adminId) && isValidAdminRecord(incoming()) && incoming().adminId == adminId && isAdmin();
+      allow update: if false;
+      allow delete: if isSignedIn() && isValidId(adminId) && isAdmin();
+    }
+
+    // 2. Users Collection
+    match /users/{userId} {
+      allow get: if isSignedIn() && isValidId(userId) && (request.auth.uid == userId || isAdmin());
+      allow list: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
+
+      allow create: if isSignedIn() &&
+                       isValidId(userId) &&
+                       isValidUserProfile(incoming()) &&
+                       request.auth.uid == userId &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().suspended == false;
+
+      allow update: if isSignedIn() &&
+                       isValidId(userId) &&
+                       isValidUserProfile(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt && (
+                         (
+                           request.auth.uid == userId &&
+                           existing().suspended == false &&
+                           incoming().suspended == false &&
+                           incoming().diff(existing()).affectedKeys().hasOnly([
+                             'username', 'avatarId', 'totalCoins', 'totalRounds',
+                             'bestScore', 'highestCombo', 'mangoCount', 'coconutCount', 'cowCount',
+                             'unlockedAchievements', 'tutorialCompleted', 'referralCode',
+                             'referredByCode', 'referralCount', 'teamId', 'teamName',
+                             'chandaBestScore', 'updatedAt'
+                           ])
+                         ) ||
+                         (
+                           isAdmin() &&
+                           incoming().diff(existing()).affectedKeys().hasOnly([
+                             'username', 'avatarId', 'totalCoins', 'totalRounds',
+                             'bestScore', 'highestCombo', 'mangoCount', 'coconutCount', 'cowCount',
+                             'unlockedAchievements', 'suspended', 'tutorialCompleted',
+                             'referralCode', 'referredByCode', 'referralCount', 'teamId',
+                             'teamName', 'chandaBestScore', 'updatedAt'
+                           ])
+                         )
+                       );
+
+      allow delete: if isSignedIn() && isValidId(userId) && isAdmin();
+    }
+
+    // 3. Scores Collection
+    match /scores/{scoreId} {
+      allow get: if isSignedIn() && isValidId(scoreId) && (
+        existing().userId == request.auth.uid ||
+        existing().status == 'valid' ||
+        isAdmin()
+      );
+
+      allow list: if isSignedIn() && (
+        existing().userId == request.auth.uid ||
+        existing().status == 'valid' ||
+        isAdmin()
+      );
+
+      allow create: if isSignedIn() &&
+                       isValidId(scoreId) &&
+                       isValidScoreEntry(incoming()) &&
+                       incoming().scoreId == scoreId &&
+                       incoming().userId == request.auth.uid;
+
+      allow update: if isSignedIn() &&
+                       isValidId(scoreId) &&
+                       isValidScoreEntry(incoming()) &&
+                       incoming().scoreId == existing().scoreId &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       isAdmin() &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['status', 'flaggedSuspicious']);
+
+      allow delete: if isSignedIn() && isValidId(scoreId) && isAdmin();
+    }
+
+    // 4. Game Sessions Collection
+    match /game_sessions/{sessionId} {
+      allow get: if isSignedIn() && isValidId(sessionId) && (existing().userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
+
+      allow create: if isSignedIn() &&
+                       isValidId(sessionId) &&
+                       isValidGameSession(incoming()) &&
+                       incoming().sessionId == sessionId &&
+                       incoming().userId == request.auth.uid;
+
+      allow update: if false;
+      allow delete: if isSignedIn() && isValidId(sessionId) && isAdmin();
+    }
+
+    // 5. Referrals Collection
+    match /referrals/{referralId} {
+      allow get: if isSignedIn() && isValidId(referralId) && (
+        existing().referrerUserId == request.auth.uid ||
+        existing().referredUserId == request.auth.uid ||
+        isAdmin()
+      );
+
+      allow list: if isSignedIn() && (
+        existing().referrerUserId == request.auth.uid ||
+        existing().referredUserId == request.auth.uid ||
+        isAdmin()
+      );
+
+      allow create: if isSignedIn() &&
+                       isValidId(referralId) &&
+                       isValidReferral(incoming()) &&
+                       incoming().referralId == referralId &&
+                       incoming().referredUserId == request.auth.uid &&
+                       incoming().referrerUserId != request.auth.uid;
+
+      allow update: if isSignedIn() &&
+                       isValidId(referralId) &&
+                       isValidReferral(incoming()) &&
+                       incoming().referralId == existing().referralId &&
+                       incoming().createdAt == existing().createdAt &&
+                       isAdmin() &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['status', 'rewardCoins']);
+
+      allow delete: if isSignedIn() && isValidId(referralId) && isAdmin();
+    }
+
+    // 6. Friends Collection
+    match /friends/{friendshipId} {
+      allow get: if isSignedIn() && isValidId(friendshipId) && (
+        existing().userId == request.auth.uid ||
+        existing().friendUserId == request.auth.uid ||
+        isAdmin()
+      );
+
+      allow list: if isSignedIn() && (
+        existing().userId == request.auth.uid ||
+        existing().friendUserId == request.auth.uid ||
+        isAdmin()
+      );
+
+      allow create: if isSignedIn() &&
+                       isValidId(friendshipId) &&
+                       isValidFriendConnection(incoming()) &&
+                       incoming().friendshipId == friendshipId &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().friendUserId != request.auth.uid;
+
+      allow update: if isSignedIn() &&
+                       isValidId(friendshipId) &&
+                       isValidFriendConnection(incoming()) &&
+                       existing().userId == request.auth.uid &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['friendBestScore', 'friendTeamName', 'onlineStatus']);
+
+      allow delete: if isSignedIn() && isValidId(friendshipId) && (existing().userId == request.auth.uid || isAdmin());
+    }
+
+    // 7. Teams Collection
+    match /teams/{teamId} {
+      allow get: if isSignedIn() && isValidId(teamId) && (
+        existing().status == 'active' ||
+        existing().managerId == request.auth.uid ||
+        isAdmin()
+      );
+
+      allow list: if isSignedIn() && (
+        existing().status == 'active' ||
+        existing().managerId == request.auth.uid ||
+        isAdmin()
+      );
+
+      allow create: if isSignedIn() &&
+                       isValidId(teamId) &&
+                       isValidTeamRecord(incoming()) &&
+                       incoming().teamId == teamId &&
+                       incoming().managerId == request.auth.uid &&
+                       incoming().suspended == false &&
+                       incoming().status == 'active';
+
+      allow update: if isSignedIn() &&
+                       isValidId(teamId) &&
+                       isValidTeamRecord(incoming()) &&
+                       incoming().teamId == existing().teamId &&
+                       incoming().createdAt == existing().createdAt && (
+                         (
+                           existing().status == 'active' &&
+                           incoming().suspended == false &&
+                           incoming().status == 'active' &&
+                           incoming().managerId == existing().managerId &&
+                           incoming().diff(existing()).affectedKeys().hasOnly([
+                             'teamName', 'teamAvatar', 'memberIds', 'memberNames', 'totalScore', 'updatedAt'
+                           ])
+                         ) ||
+                         (
+                           isAdmin() &&
+                           incoming().diff(existing()).affectedKeys().hasOnly([
+                             'teamName', 'teamAvatar', 'memberIds', 'memberNames', 'totalScore',
+                             'suspended', 'status', 'updatedAt'
+                           ])
+                         )
+                       );
+
+      allow delete: if isSignedIn() && isValidId(teamId) && (existing().managerId == request.auth.uid || isAdmin());
+    }
+
+    // 8. Competitions Collection
+    match /competitions/{competitionId} {
+      allow get: if isSignedIn() && isValidId(competitionId) && (
+        existing().status in ['waiting', 'active', 'completed'] ||
+        existing().managerId == request.auth.uid ||
+        isAdmin()
+      );
+
+      allow list: if isSignedIn() && (
+        existing().status in ['waiting', 'active', 'completed'] ||
+        existing().managerId == request.auth.uid ||
+        isAdmin()
+      );
+
+      allow create: if isSignedIn() &&
+                       isValidId(competitionId) &&
+                       isValidCompetitionRoom(incoming()) &&
+                       incoming().competitionId == competitionId &&
+                       incoming().managerId == request.auth.uid;
+
+      allow update: if isSignedIn() &&
+                       isValidId(competitionId) &&
+                       isValidCompetitionRoom(incoming()) &&
+                       incoming().competitionId == existing().competitionId &&
+                       incoming().managerId == existing().managerId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'status', 'participantIds', 'leaderboardSummary',
+                         'winnerName', 'winnerScore', 'updatedAt'
+                       ]);
+
+      allow delete: if isSignedIn() && isValidId(competitionId) && (existing().managerId == request.auth.uid || isAdmin());
+    }
+
+    // 9. Challenges Collection
+    match /challenges/{challengeId} {
+      allow get: if isSignedIn() && isValidId(challengeId) && (
+        existing().status in ['open', 'completed'] ||
+        existing().creatorId == request.auth.uid ||
+        isAdmin()
+      );
+
+      allow list: if isSignedIn() && (
+        existing().status in ['open', 'completed'] ||
+        existing().creatorId == request.auth.uid ||
+        isAdmin()
+      );
+
+      allow create: if isSignedIn() &&
+                       isValidId(challengeId) &&
+                       isValidChallengeMatch(incoming()) &&
+                       incoming().challengeId == challengeId &&
+                       incoming().creatorId == request.auth.uid;
+
+      allow update: if isSignedIn() &&
+                       isValidId(challengeId) &&
+                       isValidChallengeMatch(incoming()) &&
+                       incoming().challengeId == existing().challengeId &&
+                       incoming().creatorId == existing().creatorId &&
+                       incoming().creatorScore == existing().creatorScore &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'accepterId', 'accepterName', 'accepterScore',
+                         'winnerName', 'status', 'updatedAt'
+                       ]);
+
+      allow delete: if isSignedIn() && isValidId(challengeId) && isAdmin();
+    }
+
+    // 10. Notifications Collection
+    match /notifications/{notificationId} {
+      allow get: if isSignedIn() && isValidId(notificationId) && (
+        existing().recipientUserId == request.auth.uid ||
+        isAdmin()
+      );
+
+      allow list: if isSignedIn() && (
+        existing().recipientUserId == request.auth.uid ||
+        isAdmin()
+      );
+
+      allow create: if isSignedIn() &&
+                       isValidId(notificationId) &&
+                       isValidAppNotification(incoming()) &&
+                       incoming().notificationId == notificationId;
+
+      allow update: if isSignedIn() &&
+                       isValidId(notificationId) &&
+                       isValidAppNotification(incoming()) &&
+                       existing().recipientUserId == request.auth.uid &&
+                       incoming().recipientUserId == existing().recipientUserId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['read']);
+
+      allow delete: if isSignedIn() && isValidId(notificationId) && (existing().recipientUserId == request.auth.uid || isAdmin());
+    }
+
+    // 11. Game Settings Collection
+    match /game_settings/{configId} {
+      allow get: if isSignedIn() && isValidId(configId);
+      allow list: if isSignedIn() && isAdmin();
+
+      allow create: if isSignedIn() &&
+                       isValidId(configId) &&
+                       isValidGameSettings(incoming()) &&
+                       incoming().configId == configId &&
+                       isAdmin();
+
+      allow update: if isSignedIn() &&
+                       isValidId(configId) &&
+                       isValidGameSettings(incoming()) &&
+                       incoming().configId == existing().configId &&
+                       isAdmin() &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'roundDurationSeconds', 'maxComboMultiplier', 'npcDetectionRadius',
+                         'specialItemFrequency', 'itemSpawnRate', 'difficulty', 'playerSpeedMultiplier',
+                         'adsEnabled', 'topBannerEnabled', 'bottomBannerEnabled', 'resultAdEnabled',
+                         'rewardedAdEnabled', 'rewardedCoinBonus', 'adBannerCode', 'adBannerSize',
+                         'productionDomain', 'downloadAppUrl', 'referralRewardCoins', 'maxTeamSize',
+                         'chandaDurationSeconds', 'chandaBaseReward', 'updatedAt'
+                       ]);
+
+      allow delete: if false;
+    }
+
+    // 12. Collectible Items Collection
+    match /items/{itemId} {
+      allow get: if isSignedIn() && isValidId(itemId) && (existing().active == true || isAdmin());
+      allow list: if isSignedIn() && (existing().active == true || isAdmin());
+
+      allow create: if isSignedIn() &&
+                       isValidId(itemId) &&
+                       isValidCollectibleItemConfig(incoming()) &&
+                       incoming().itemId == itemId &&
+                       isAdmin();
+
+      allow update: if isSignedIn() &&
+                       isValidId(itemId) &&
+                       isValidCollectibleItemConfig(incoming()) &&
+                       incoming().itemId == existing().itemId &&
+                       isAdmin() &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'nameBn', 'nameEn', 'emoji', 'coinValue',
+                         'spawnProbability', 'respawnTimeSeconds', 'specialEffect', 'active', 'updatedAt'
+                       ]);
+
+      allow delete: if isSignedIn() && isValidId(itemId) && isAdmin();
+    }
+  }
+}
